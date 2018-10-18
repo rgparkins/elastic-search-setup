@@ -58,11 +58,11 @@ then
 else
   echo "Role does not exist. Creating...."
 
-  TMP=`echo $(aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file://02-trust-policy.json --path /elasticsearch/)`
+  TMP=`echo $(aws iam create-role --role-name ${ROLE_NAME} --assume-role-policy-document file://01-trust-policy.json --path /elasticsearch/)`
 
   ROLE_ID=`echo ${TMP} | jq '.Role.RoleId' | tr -d '"'`
 
-  sed  "s/my-bucket/${BUCKET_NAME}/g" ./02-policy-template.json | tee ./policy.json
+  sed  "s/my-bucket/${BUCKET_NAME}/g" ./01-policy-template.json | tee ./policy.json
 
   POLICY1=`echo $(aws iam create-policy --policy-name "elastic-search-policy-test" --policy-document file://policy.json --description "elasticsearch access to s3 and instance descriptions")`
 
