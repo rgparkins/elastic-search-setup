@@ -2,7 +2,7 @@
 
 function usage() {
   echo "Usage:"
-  echo "  create.sh <vpc_id> "
+  echo "  01-create-roles-and-security.sh <vpc_id> "
 }
 
 if [ $# -ne 1 ]
@@ -50,11 +50,24 @@ echo "********** FINISHED CREATING SECURITY GROUP ***********"
 
 echo "*************** CREATING IAM ROLE ***************"
 
+INSTANCE_PROFILE=`echo $(aws iam list-instance-profiles --path-prefix /elasticsearch/)`
+
+if [ `echo ${INSTANCE_PROFILE} | jq '.InstanceProfiles | length'` -eq 1 ]
+then
+  echo "Profile $ROLE_NAME exists...."
+else
+  echo "Profile does not exist. Creating...."
+
+  PROFILE=`echo $(aws iam create-instance-profile --path /elasticsearch/ --instance-profile-name ${ROLE_NAME})`
+
+  echo "Profile created"
+fi
+
 ROLES=`echo $(aws iam list-roles --path-prefix /elasticsearch)`
 
 if [ `echo ${ROLES} | jq '.Roles | length'` -eq 1 ]
 then
-  echo "Role exists...."
+  echo "Role $ROLE_NAME exists...."
 else
   echo "Role does not exist. Creating...."
 
@@ -71,6 +84,8 @@ else
   echo "Bucket policy: $BUCKET_POLICY_ARN"
 
   aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn $BUCKET_POLICY_ARN
+
+  aws iam add-role-to-instance-profile --instance-profile-name $ROLE_NAME --role-name $ROLE_NAME
 
   echo "Role created"
 fi
