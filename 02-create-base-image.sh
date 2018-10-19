@@ -24,7 +24,7 @@ then
   echo "Key already exists."
 else
   echo "Creating pem key"
-  aws --region us-east-1 ec2 create-key-pair --key-name $KEY_VALUE_PAIR | jq -r ".KeyMaterial" > ./${KEY_VALUE_PAIR}.pem
+  aws ec2 create-key-pair --key-name $KEY_VALUE_PAIR | jq -r ".KeyMaterial" > ./${KEY_VALUE_PAIR}.pem
 
   echo "Your pem key for ssh'ing into your instance has been created. $KEY_VALUE_PAIR.pem"
   exit;
@@ -33,7 +33,6 @@ fi
 SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-name,Values=${SG_NAME})`
 
 SECURITY_GROUP_ID=`echo $SECURITYGROUP | jq '.SecurityGroups[0].GroupId' | tr -d '"'`
-
 
 INSTANCES=`echo $(aws ec2 run-instances --image-id ${CURRENT_UBUNTU_IMAGE} \
   --count 1 \
