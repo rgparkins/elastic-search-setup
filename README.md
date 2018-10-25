@@ -17,6 +17,7 @@ The scripts rely on a central configuration.json file that holds the data the sc
 2. A subnet under that VPC
 3. An S3 bucket
 
+The configuration file that needs to be updated is described below
 ```
 {
   "vpc-id": "vpc-xxxxx",                              # The VPC id that you wish the cluster to be deployed to
