@@ -43,3 +43,4 @@ The scripts rely on a central configuration.json file that holds the data the sc
 4. Multiple regions?
 5. Route 53 dns creation to master nodes
 6. If more than 1 master node we need an ELB 
+7. nginx
