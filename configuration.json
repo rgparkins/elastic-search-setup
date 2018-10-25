@@ -1,0 +1,15 @@
+{
+  "vpc-id": "vpc-xxxxx",
+  "region": "us-east-1",
+  "availability-zone": "us-east-1a",
+  "security-group-name":"elastic-search-test",
+  "subnet-id": "subnet-xxxx",
+  "base-ami": "ami-xxxx",
+  "role-name": "elastic-search-role-test",
+  "key-name": "elastic-dev-test",
+  "s3-bucket-name": "xxxx",
+  "target-image-name": "elasticsearch-image-test",
+  "data-node-count": 2,
+  "master-node-count": 1,
+  "name": "elasticsearch-test"
+}
