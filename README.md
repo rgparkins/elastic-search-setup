@@ -11,7 +11,7 @@ which point you should be able to access you elastic search kibana data on port 
 
 The scripts rely on a central configuration.json file that holds the data the scripts will use. An example of the script is below
 
-#requirements
+# requirements
 
 1. A VPC on amazon
 2. A subnet under that VPC
