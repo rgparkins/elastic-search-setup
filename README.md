@@ -37,8 +37,9 @@ The scripts rely on a central configuration.json file that holds the data the sc
 
 # To do's
 
-1. Check if the volume setup is correct for elastic search
-2. Can kibana run on all master nodes?
-3. Multiple regions?
-4. Route 53 dns creation to master nodes
-5. If more than 1 master node we need an ELB 
+1. Use directories to tidy up
+2. Check if the volume setup is correct for elastic search
+3. Can kibana run on all master nodes?
+4. Multiple regions?
+5. Route 53 dns creation to master nodes
+6. If more than 1 master node we need an ELB 
