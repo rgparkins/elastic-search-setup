@@ -1,36 +1,28 @@
 #!/usr/bin/env bash
 
-function usage() {
-  echo "Usage:"
-  echo "  01-create-roles-and-security.sh <vpc_id> "
-}
+CONFIG=$(<configuration.json)
 
-if [ $# -ne 1 ]
-  then
-    usage
-    exit
-fi
+SG_NAME=`echo $CONFIG | jq '."security-group-name"' | tr -d '"'`
+BUCKET_NAME=`echo $CONFIG | jq '."s3-bucket-name"' | tr -d '"'`
+ROLE_NAME=`echo $CONFIG | jq '."role-name"' | tr -d '"'`
+VPC_ID=`echo $CONFIG | jq '."vpc-id"' | tr -d '"'`
 
-SG_NAME="elastic-search-test"
-BUCKET_NAME="elastic-data"
-ROLE_NAME="elastic-search-role-test"
-VPC_ID=$1
 MY_IP=`echo $(curl -s http://whatismyip.akamai.com/)`
-
 VPC_IP=`echo $(aws ec2 describe-vpcs --vpc-ids ${VPC_ID} | jq '.Vpcs[0].CidrBlockAssociationSet[0].CidrBlock') | tr -d '"'`
 
 echo "VPC internal id: ${VPC_IP}"
 echo "Your external IP address : ${MY_IP}"
 
-echo "*************** CREATING SECURITY GROUP ***************"
+echo "*************** CREATING SECURITY GROUP ${SG_NAME} ***************"
 
 SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-name,Values=${SG_NAME})`
+
 
 if [ `echo $SECURITY_GROUPS | jq '.SecurityGroups | length'` -eq 1 ]
 then
   echo "Group exists...."
 
-  SECURITY_GROUP_ID=`echo $SECURITYGROUP | jq '.SecurityGroups[0].GroupId' | tr -d '"'`
+  SECURITY_GROUP_ID=`echo $SECURITY_GROUPS | jq '.SecurityGroups[0].GroupId' | tr -d '"'`
 else
   echo "Group does not exist.. creating"
 
@@ -77,7 +69,7 @@ else
 
   sed  "s/my-bucket/${BUCKET_NAME}/g" ./01-policy-template.json | tee ./policy.json
 
-  POLICY1=`echo $(aws iam create-policy --policy-name "elastic-search-policy-test" --policy-document file://policy.json --description "elasticsearch access to s3 and instance descriptions")`
+  POLICY1=`echo $(aws iam create-policy --policy-name "${ROLE_NAME}-policy" --policy-document file://policy.json --description "elasticsearch access to s3 and instance descriptions")`
 
   BUCKET_POLICY_ARN=`echo ${POLICY1} | jq '.Policy.Arn' | tr -d '"'`
 

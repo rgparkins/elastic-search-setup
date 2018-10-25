@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -x
+# output log of userdata to /var/log/user-data.log
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+aws s3 cp s3://ctm-quoting-dev/elasticsearch/elasticsearch_data.yml /etc/elasticsearch/elasticsearch.yml --region us-east-1
+aws s3 cp s3://ctm-quoting-dev/elasticsearch/data.jvm.options /etc/elasticsearch/jvm.options --region us-east-1
+aws s3 cp s3://ctm-quoting-dev/elasticsearch/Dockerfile /etc/elasticsearch --region us-east-1
+aws s3 cp s3://ctm-quoting-dev/elasticsearch/docker-compose.data.yml /etc/elasticsearch/docker-compose.yml --region us-east-1
+
+sed -i -e "s/nodename/${HOSTNAME}/g" /etc/elasticsearch/elasticsearch.yml
+
+mkfs.xfs /dev/xvdba
+mkdir -p /vol/es
+mount /dev/xvdba /vol/es
+
+chown -R 1000:1000 /vol
+chown -R 1000:1000 /etc/elasticsearch
+
+sysctl -w vm.max_map_count=262144
+
+docker-compose -f /etc/elasticsearch/docker-compose.yml up -d
