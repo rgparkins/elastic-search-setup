@@ -10,11 +10,9 @@ cloud.node.auto_attributes: true
 
 http.port: 9200
 
-node.master: true
+node.master: false
 
 node.data: false
-
-node.ingest: false
 
 node.name: "nodename"
 
@@ -22,10 +20,10 @@ transport.tcp.compress: true
 
 bootstrap.memory_lock: false
 
-discovery.zen.minimum_master_nodes: 2
+discovery.zen.minimum_master_nodes: 1
 
 discovery.zen.hosts_provider: ec2
 
-discovery.ec2.endpoint: ec2.my-region.amazonaws.com
+discovery.ec2.endpoint: ec2.my-subnet.amazonaws.com
 
 thread_pool.bulk.queue_size: 500

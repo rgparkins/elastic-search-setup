@@ -22,7 +22,7 @@ transport.tcp.compress: true
 
 bootstrap.memory_lock: false
 
-discovery.zen.minimum_master_nodes: 1
+discovery.zen.minimum_master_nodes: 2
 
 discovery.zen.hosts_provider: ec2
 
