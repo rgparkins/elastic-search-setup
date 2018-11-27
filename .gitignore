@@ -1,2 +1,5 @@
 .idea/*
 *.pem
+client.userdata.txt
+runtime.data.userdata.txt
+runtime.master.userdata.txt
