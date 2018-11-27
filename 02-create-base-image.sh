@@ -44,6 +44,10 @@ aws ec2 wait instance-status-ok --instance-ids $INSTANCES
 
 echo "instances ok"
 
+echo "waiting for docker initialisation"
+
+sleep 2m
+
 echo "creating image called ${IMAGE_NAME}"
 
 IMAGE_ID=`echo $(aws ec2 create-image --instance-id ${INSTANCES} --name ${IMAGE_NAME} --description "AN AMI for elasticsearch")`

@@ -30,54 +30,6 @@ AMIS=`echo $(aws ec2 describe-images --filters "Name=tag:Name,Values=${IMAGE_NAM
 
 BASE_IMAGE_ID=`echo $AMIS | jq '.Images[0].ImageId' | tr -d '"'`
 
-COUNT=1
-
-INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
-  --count ${MASTER_NODE_COUNT} \
-  --instance-type t2.xlarge \
-  --key-name ${KEY_VALUE_PAIR} \
-  --subnet-id ${SUBNET_ID} \
-  --iam-instance-profile Name=${ROLE_NAME} \
-  --user-data file://runtime.master.userdata.txt \
-  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${NAME}-${COUNT}-master}]" \
-  --associate-public-ip-address \
-  --security-group-ids ${SECURITY_GROUP_ID} | \
-jq -rc '.Instances[].InstanceId')`
-
-echo $INSTANCES
-
-echo "Waiting for instances to run state"
-
-aws ec2 wait instance-running --instance-ids $INSTANCES
-
-echo "instances now running"
-
-for instance in $INSTANCES; do
-
-   VOLUMEDATA=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=${NAME}-${COUNT}-master --query "Volumes[*].{ID:VolumeId,Tag:Tags}")
-
-   if [ `echo $VOLUMEDATA | jq length` -eq 1 ]
-   then
-     VOLUMEID=`echo $VOLUMEDATA | jq .[].ID | tr -d '"'`
-     echo "volume already exists!"
-   else
-     echo "Creating volume"
-     VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
-       --volume-type gp2 --size 1024 \
-       --tag-specifications "ResourceType=volume,Tags=[{Key=purpose,Value=dev},{Key=Name,Value=${NAME}-${COUNT}-master}]") | jq .VolumeId | tr -d '"'`
-
-      aws ec2 wait volume-available --volume-ids $VOLUMEID
-
-      echo "Volume created"
-   fi
-
-   aws ec2 attach-volume --device /dev/xvdba --instance-id $instance --volume-id $VOLUMEID
-
-   aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
-
-   COUNT=$((COUNT+1))
-done
-
 INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
   --count ${DATA_NODE_COUNT} \
   --instance-type t2.xlarge \
@@ -119,6 +71,55 @@ for instance in $INSTANCES; do
 
    echo "instance id : ${instance} being attached to ${VOLUMEID}"
    aws ec2 attach-volume --device /dev/xvdba --instance-id ${instance} --volume-id ${VOLUMEID}
+
+   aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
+
+   COUNT=$((COUNT+1))
+done
+
+echo "Using base id ${BASE_IMAGE_ID}"
+
+COUNT=1
+
+INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
+  --count ${MASTER_NODE_COUNT} \
+  --instance-type t2.xlarge \
+  --key-name ${KEY_VALUE_PAIR} \
+  --subnet-id ${SUBNET_ID} \
+  --iam-instance-profile Name=${ROLE_NAME} \
+  --user-data file://runtime.master.userdata.txt \
+  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${NAME}-master}]" \
+  --associate-public-ip-address \
+  --security-group-ids ${SECURITY_GROUP_ID} | \
+jq -rc '.Instances[].InstanceId')`
+
+echo $INSTANCES
+
+echo "Waiting for instances to run state"
+
+aws ec2 wait instance-running --instance-ids $INSTANCES
+
+echo "instances now running"
+
+for instance in $INSTANCES; do
+   VOLUMEDATA=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=${NAME}-${COUNT}-master --query "Volumes[*].{ID:VolumeId,Tag:Tags}")
+
+   if [ `echo $VOLUMEDATA | jq length` -eq 1 ]
+   then
+     VOLUMEID=`echo $VOLUMEDATA | jq .[].ID | tr -d '"'`
+     echo "volume already exists!"
+   else
+     echo "Creating volume"
+     VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
+       --volume-type gp2 --size 1024 \
+       --tag-specifications "ResourceType=volume,Tags=[{Key=purpose,Value=dev},{Key=Name,Value=${NAME}-${COUNT}-master}]") | jq .VolumeId | tr -d '"'`
+
+      aws ec2 wait volume-available --volume-ids $VOLUMEID
+
+      echo "Volume created"
+   fi
+
+   aws ec2 attach-volume --device /dev/xvdba --instance-id $instance --volume-id $VOLUMEID
 
    aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
 
