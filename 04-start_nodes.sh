@@ -15,12 +15,9 @@ CLIENT_NODE_COUNT=`echo $CONFIG | jq '."client-node-count"' | tr -d '"'`
 NAME=`echo $CONFIG | jq '."name"' | tr -d '"'`
 IMAGE_NAME=`echo $CONFIG | jq '."target-image-name"' | tr -d '"'`
 
-sed  "s/my-region/${REGION}/g" ./04-runtime.data.userdata.txt | tee ./runtime.data.userdata.txt
-sed  "s/my-bucket/${BUCKET_NAME}/g" ./runtime.data.userdata.txt | tee ./runtime.data.userdata.txt
-sed  "s/my-region/${REGION}/g" ./04-runtime.master.userdata.txt | tee ./runtime.master.userdata.txt
-sed  "s/my-bucket/${BUCKET_NAME}/g" ./runtime.master.userdata.txt | tee ./runtime.master.userdata.txt
-sed  "s/my-region/${REGION}/g" ./04-runtime.client.userdata.txt | tee ./runtime.client.userdata.txt
-sed  "s/my-bucket/${BUCKET_NAME}/g" ./runtime.client.userdata.txt | tee ./runtime.client.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.data.userdata.txt | tee ./runtime.data.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.master.userdata.txt | tee ./runtime.master.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.client.userdata.txt | tee ./runtime.client.userdata.txt
 
 SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-name,Values=${SG_NAME})`
 

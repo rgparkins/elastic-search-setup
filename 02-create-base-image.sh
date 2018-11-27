@@ -46,13 +46,13 @@ echo "instances ok"
 
 echo "waiting for docker initialisation"
 
-sleep 2m
-
-echo "creating image called ${IMAGE_NAME}"
-
-IMAGE_ID=`echo $(aws ec2 create-image --instance-id ${INSTANCES} --name ${IMAGE_NAME} --description "AN AMI for elasticsearch")`
-
-IM=`echo ${IMAGE_ID} | jq '.ImageId' | tr -d '"'`
-
-aws ec2 create-tags --resources ${IM} --tags Key=Name,Value=${IMAGE_NAME}
-echo "image created"
+#sleep 2m
+#
+#echo "creating image called ${IMAGE_NAME}"
+#
+#IMAGE_ID=`echo $(aws ec2 create-image --instance-id ${INSTANCES} --name ${IMAGE_NAME} --description "AN AMI for elasticsearch")`
+#
+#IM=`echo ${IMAGE_ID} | jq '.ImageId' | tr -d '"'`
+#
+#aws ec2 create-tags --resources ${IM} --tags Key=Name,Value=${IMAGE_NAME}
+#echo "image created"
