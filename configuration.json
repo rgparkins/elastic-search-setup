@@ -1,16 +1,16 @@
 {
-  "vpc-id": "vpc-701ea917",
-  "region": "us-east-1",
-  "availability-zone": "us-east-1a",
-  "security-group-name":"elastic-search-test",
-  "subnet-id": "subnet-40c89418",
-  "base-ami": "ami-0ac019f4fcb7cb7e6",
-  "role-name": "elastic-search-role-test",
-  "key-name": "elastic-dev-test",
+  "vpc-id": "[your vpc-id]",
+  "region": "[your region]",
+  "availability-zone": "[your availability-zone]",
+  "security-group-name":"quoting-elasticsearch-nonprod",
+  "subnet-id": "[your subnet]",
+  "base-ami": "[the latest amazon ubuntu AMI]",
+  "role-name": "quoting-elasticsearch-nonprod",
+  "key-name": "quoting-elasticsearch-nonprod",
   "s3-bucket-name": "ctm-quoting-dev",
-  "target-image-name": "elasticsearch-image-test",
+  "target-image-name": "quoting-elasticsearch-nonprod",
   "data-node-count": 6,
   "master-node-count": 3,
   "client-node-count": 1,
-  "name": "elasticsearch-test"
+  "name": "quoting-elasticsearch-nonprod"
 }

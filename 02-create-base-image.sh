@@ -52,9 +52,3 @@ IM=`echo ${IMAGE_ID} | jq '.ImageId' | tr -d '"'`
 
 aws ec2 create-tags --resources ${IM} --tags Key=Name,Value=${IMAGE_NAME}
 echo "image created"
-
-
-elastic-search-setup richardparkins$ aws ec2 describe-instances --filters "Name=tag:Name,Values=elasticsearch-test-master"
-  --query 'Reservations[*].Instances[*].[InstanceId,ImageId,Tags[?Key==`Application`].Value]'
-
-aws ec2 describe-instances --filters "Name=tag:Name,Values=elasticsearch-test-master" --query 'Reservations[*].Instances[*].[Monitoring.State==`Enabled`].Value]'

@@ -34,6 +34,8 @@ else
   aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --ip-permissions IpProtocol=tcp,FromPort=5601,ToPort=5601,IpRanges="[{CidrIp=${MY_IP}/32,Description='kibana access'}]"
   aws ec2 authorize-security-group-ingress --group-id $SECURITY_GROUP_ID --ip-permissions IpProtocol=tcp,FromPort=9300,ToPort=9300,IpRanges="[{CidrIp=${VPC_IP},Description='node communication within the VPC'}]"
 
+  aws ec2 create-tags --resources ${SECURITY_GROUP_ID} --tags Key=Name,Value=${SG_NAME}
+
   echo "Group created"
 fi
 
