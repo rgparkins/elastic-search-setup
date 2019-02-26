@@ -1,0 +1,11 @@
+{
+  "Comment": "CREATE a record ",
+  "Changes": [{
+    "Action": "CREATE",
+    "ResourceRecordSet": {
+      "Name": "DNS.nonprod.internal.ctmers.io",
+      "Type": "CNAME",
+      "TTL": 300,
+      "ResourceRecords": [{ "Value": "ELB"}]
+    }}]
+}

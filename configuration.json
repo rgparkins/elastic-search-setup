@@ -12,5 +12,7 @@
   "data-node-count": 6,
   "master-node-count": 3,
   "client-node-count": 1,
-  "name": "quoting-elasticsearch-nonprod"
+  "name": "quoting-elasticsearch-nonprod",
+  "dns": "[the dns subdmain]",
+  "hosted-zone-id": "[hosted zone]"
 }
