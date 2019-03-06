@@ -8,7 +8,6 @@ SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-na
 VPC_ID=`echo $CONFIG | jq '."vpc-id"' | tr -d '"'`
 MY_IP=`echo $(curl -s http://whatismyip.akamai.com/)`
 NAME=`echo $CONFIG | jq '."name"' | tr -d '"'`
-
 ELB=`aws elb describe-load-balancers --load-balancer-names "quoting-elasticsearch-nonprod"`
 
 ELBDNSNAME=`echo $ELB | jq '.LoadBalancerDescriptions[0].CanonicalHostedZoneName' | tr -d '"'`
@@ -20,4 +19,4 @@ echo $DNS
 
 sed  -e "s/DNS/${DNS}/g" -e "s/ELB/${ELBDNSNAME}/g" ./06-change_record_set.json | tee ./change_record_set.json
 
-aws route53 change-resource-record-sets --hosted-zone-id "${HOSTEDZONEID}" --change-batch "file://change_record_set.json"
+aws route53 change-resource-record-sets --hosted-zone-id "${HOSTEDZONEID}" --cgit ststhange-batch "file://change_record_set.json"

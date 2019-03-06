@@ -2,15 +2,18 @@
 
 CONFIG=$(<configuration.json)
 
+NAME=`echo ${CONFIG} | jq '."name"' | tr -d '"'`
 BUCKET_NAME=`echo ${CONFIG} | jq '."s3-bucket-name"' | tr -d '"'`
+SUBNET=`echo ${CONFIG} | jq '."availability-zone"' | tr -d '"'`
 REGION=`echo ${CONFIG} | jq '."region"' | tr -d '"'`
 
-sed  "s/my-region/${REGION}/g" ./03-elasticsearch_data.yml | tee ./elasticsearch_data.yml
-sed  "s/my-region/${REGION}/g" ./03-elasticsearch_master.yml | tee ./elasticsearch_master.yml
-sed  "s/my-region/${REGION}/g" ./03-elasticsearch_client.yml | tee ./elasticsearch_client.yml
+sed  -e "s/my-subnet/${REGION}/g" -e "s/tag-cluster/${NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./03-elasticsearch_data.yml | tee ./elasticsearch_data.yml
+sed  -e "s/my-subnet/${REGION}/g" -e "s/tag-cluster/${NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./03-elasticsearch_master.yml | tee ./elasticsearch_master.yml
+sed  -e "s/my-subnet/${REGION}/g" -e "s/tag-cluster/${NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./03-elasticsearch_client.yml | tee ./elasticsearch_client.yml
 sed  "s/my-region/${REGION}/g" ./03-Dockerfile | tee ./Dockerfile
 
 echo "Pushing up common files"
+
 aws s3 cp ./Dockerfile s3://${BUCKET_NAME}/elasticsearch/Dockerfile --region ${REGION}
 
 echo "Pushing up the data node configuration files"

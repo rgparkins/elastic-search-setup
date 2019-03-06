@@ -14,10 +14,11 @@ DATA_NODE_COUNT=`echo $CONFIG | jq '."data-node-count"' | tr -d '"'`
 CLIENT_NODE_COUNT=`echo $CONFIG | jq '."client-node-count"' | tr -d '"'`
 NAME=`echo $CONFIG | jq '."name"' | tr -d '"'`
 IMAGE_NAME=`echo $CONFIG | jq '."target-image-name"' | tr -d '"'`
+TAGS=`echo $CONFIG | jq '."tags"' | tr -d '"'`
 
-sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.data.userdata.txt | tee ./runtime.data.userdata.txt
-sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.master.userdata.txt | tee ./runtime.master.userdata.txt
-sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" ./04-runtime.client.userdata.txt | tee ./runtime.client.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./04-runtime.data.userdata.txt | tee ./runtime.data.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./04-runtime.master.userdata.txt | tee ./runtime.master.userdata.txt
+sed  -e "s/my-region/${REGION}/g" -e "s/my-bucket/${BUCKET_NAME}/g" -e "s/my_cluster_name/${NAME}/g" ./04-runtime.client.userdata.txt | tee ./runtime.client.userdata.txt
 
 SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-name,Values=${SG_NAME})`
 
@@ -27,56 +28,7 @@ AMIS=`echo $(aws ec2 describe-images --filters "Name=tag:Name,Values=${IMAGE_NAM
 
 BASE_IMAGE_ID=`echo $AMIS | jq '.Images[0].ImageId' | tr -d '"'`
 
-INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
-  --count ${DATA_NODE_COUNT} \
-  --instance-type t2.xlarge \
-  --key-name ${KEY_VALUE_PAIR} \
-  --subnet-id ${SUBNET_ID} \
-  --iam-instance-profile Name=${ROLE_NAME} \
-  --user-data file://runtime.data.userdata.txt \
-  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${NAME}-data}]" \
-  --associate-public-ip-address \
-  --security-group-ids ${SECURITY_GROUP_ID} | \
-jq -rc '.Instances[].InstanceId')`
-
-echo "Waiting for instances to run state"
-
-aws ec2 wait instance-running --instance-ids $INSTANCES
-
-echo "instances now running"
-
-echo "Instance ids: ${INSTANCES}"
-
-COUNT=1
-for instance in $INSTANCES; do
-   VOLUMEDATA=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=${NAME}-${COUNT}-data --query "Volumes[*].{ID:VolumeId,Tag:Tags}")
-
-   if [ `echo $VOLUMEDATA | jq length` -eq 1 ]
-   then
-     VOLUMEID=`echo $VOLUMEDATA | jq .[].ID | tr -d '"'`
-     echo "volume already exists!"
-   else
-     echo "Creating volume"
-     VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
-       --volume-type gp2 --size 1024 \
-       --tag-specifications "ResourceType=volume,Tags=[{Key=purpose,Value=dev},{Key=Name,Value=${NAME}-${COUNT}-data}]") | jq .VolumeId | tr -d '"'`
-
-      aws ec2 wait volume-available --volume-ids $VOLUMEID
-
-      echo "Volume created"
-   fi
-
-   echo "instance id : ${instance} being attached to ${VOLUMEID}"
-   aws ec2 attach-volume --device /dev/xvdba --instance-id ${instance} --volume-id ${VOLUMEID}
-
-   aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
-
-   COUNT=$((COUNT+1))
-done
-
 echo "Using base id ${BASE_IMAGE_ID}"
-
-COUNT=1
 
 INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
   --count ${MASTER_NODE_COUNT} \
@@ -85,7 +37,7 @@ INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
   --subnet-id ${SUBNET_ID} \
   --iam-instance-profile Name=${ROLE_NAME} \
   --user-data file://runtime.master.userdata.txt \
-  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${NAME}-master}]" \
+  --tag-specifications="ResourceType=instance,Tags=[${TAGS},{Key=Name,Value=${NAME}-master}]" \
   --associate-public-ip-address \
   --security-group-ids ${SECURITY_GROUP_ID} | \
 jq -rc '.Instances[].InstanceId')`
@@ -108,8 +60,8 @@ for instance in $INSTANCES; do
    else
      echo "Creating volume"
      VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
-       --volume-type gp2 --size 1024 \
-       --tag-specifications "ResourceType=volume,Tags=[{Key=purpose,Value=dev},{Key=Name,Value=${NAME}-${COUNT}-master}]") | jq .VolumeId | tr -d '"'`
+       --volume-type gp2 --size 128 \
+       --tag-specifications "ResourceType=volume,Tags=[${TAGS},{Key=Name,Value=${NAME}-${COUNT}-master}]") | jq .VolumeId | tr -d '"'`
 
       aws ec2 wait volume-available --volume-ids $VOLUMEID
 
@@ -123,49 +75,49 @@ for instance in $INSTANCES; do
    COUNT=$((COUNT+1))
 done
 
-#INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
-#  --count ${CLIENT_NODE_COUNT} \
-#  --instance-type t2.xlarge \
-#  --key-name ${KEY_VALUE_PAIR} \
-#  --subnet-id ${SUBNET_ID} \
-#  --iam-instance-profile Name=${ROLE_NAME} \
-#  --user-data file://runtime.client.userdata.txt \
-#  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${NAME}-client}]" \
-#  --associate-public-ip-address \
-#  --security-group-ids ${SECURITY_GROUP_ID} | \
-#jq -rc '.Instances[].InstanceId')`
-#
-#echo "Waiting for instances to run state"
-#
-#aws ec2 wait instance-running --instance-ids $INSTANCES
-#
-#echo "instances now running"
-#
-#echo "Instance ids: ${INSTANCES}"
-#
-#COUNT=1
-#for instance in $INSTANCES; do
-#   VOLUMEDATA=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=${NAME}-${COUNT}-client --query "Volumes[*].{ID:VolumeId,Tag:Tags}")
-#
-#   if [ `echo $VOLUMEDATA | jq length` -eq 1 ]
-#   then
-#     VOLUMEID=`echo $VOLUMEDATA | jq .[].ID | tr -d '"'`
-#     echo "volume already exists!"
-#   else
-#     echo "Creating volume"
-#     VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
-#       --volume-type gp2 --size 1024 \
-#       --tag-specifications "ResourceType=volume,Tags=[{Key=purpose,Value=dev},{Key=Name,Value=${NAME}-${COUNT}-client}]") | jq .VolumeId | tr -d '"'`
-#
-#      aws ec2 wait volume-available --volume-ids $VOLUMEID
-#
-#      echo "Volume created"
-#   fi
-#
-#   echo "instance id : ${instance} being attached to ${VOLUMEID}"
-#   aws ec2 attach-volume --device /dev/xvdba --instance-id ${instance} --volume-id ${VOLUMEID}
-#
-#   aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
-#
-#   COUNT=$((COUNT+1))
-#done
+INSTANCES=`echo $(aws ec2 run-instances --image-id ${BASE_IMAGE_ID} \
+  --count ${DATA_NODE_COUNT} \
+  --instance-type t2.xlarge \
+  --key-name ${KEY_VALUE_PAIR} \
+  --subnet-id ${SUBNET_ID} \
+  --iam-instance-profile Name=${ROLE_NAME} \
+  --user-data file://runtime.data.userdata.txt \
+  --tag-specifications="ResourceType=instance,Tags=[${TAGS},{Key=Name,Value=${NAME}-data}]" \
+  --associate-public-ip-address \
+  --security-group-ids ${SECURITY_GROUP_ID} | \
+jq -rc '.Instances[].InstanceId')`
+
+echo "Waiting for instances to run state"
+
+aws ec2 wait instance-running --instance-ids $INSTANCES
+
+echo "instances now running"
+
+echo "Instance ids: ${INSTANCES}"
+
+COUNT=1
+for instance in $INSTANCES; do
+   VOLUMEDATA=$(aws ec2 describe-volumes --filters Name=tag:Index,Values=${COUNT}-data --query "Volumes[*].{ID:VolumeId,Tag:Tags}")
+
+   if [ `echo $VOLUMEDATA | jq length` -eq 1 ]
+   then
+     VOLUMEID=`echo $VOLUMEDATA | jq .[].ID | tr -d '"'`
+     echo "volume already exists!"
+   else
+     echo "Creating volume"
+     VOLUMEID=`echo $(aws ec2 create-volume --availability-zone ${AVAILABILITY_ZONE} \
+       --volume-type gp2 --size 1024 \
+       --tag-specifications "ResourceType=volume,Tags=[${TAGS},{Key=Index,Value=${COUNT}},{Key=Name,Value=${NAME}-${COUNT}-data}]") | jq .VolumeId | tr -d '"'`
+
+      aws ec2 wait volume-available --volume-ids $VOLUMEID
+
+      echo "Volume created"
+   fi
+
+   echo "instance id : ${instance} being attached to ${VOLUMEID}"
+   aws ec2 attach-volume --device /dev/xvdba --instance-id ${instance} --volume-id ${VOLUMEID}
+
+   aws ec2 modify-instance-attribute --instance-id $instance --block-device-mappings "[{\"DeviceName\": \"/dev/xvdba\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
+
+   COUNT=$((COUNT+1))
+done

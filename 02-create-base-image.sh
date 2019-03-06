@@ -33,7 +33,7 @@ INSTANCES=`echo $(aws ec2 run-instances --image-id ${CURRENT_UBUNTU_IMAGE} \
   --subnet-id ${SUBNET_ID} \
   --iam-instance-profile Name=${ROLE_NAME} \
   --user-data file://02-image-userdata.txt \
-  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${IMAGE_NAME}}]" \
+  --tag-specifications="ResourceType=instance,Tags=[{Key=Name,Value=${IMAGE_NAME}},{KEY=environment,Value={Test}]" \
   --associate-public-ip-address \
   --security-group-ids ${SECURITY_GROUP_ID} | \
 jq -rc '.Instances[].InstanceId')`

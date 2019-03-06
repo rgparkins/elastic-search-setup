@@ -8,6 +8,10 @@ SECURITY_GROUPS=`echo $(aws ec2 describe-security-groups --filters Name=group-na
 VPC_ID=`echo $CONFIG | jq '."vpc-id"' | tr -d '"'`
 MY_IP=`echo $(curl -s http://whatismyip.akamai.com/)`
 NAME=`echo $CONFIG | jq '."name"' | tr -d '"'`
+TAGS=`echo $CONFIG | jq '."tags"' | tr -d '"'`
+
+TAGS=`echo "${TAGS//{/}"`
+TAGS=`echo "${TAGS//\}/}"`
 
 if [ `echo $SECURITY_GROUPS | jq '.SecurityGroups | length'` -eq 1 ]
 then
@@ -25,10 +29,10 @@ else
 
   echo "Group created"
 fi
-
 DNS=`echo $(aws elb create-load-balancer --load-balancer-name ${NAME} \
   --security-groups ${SECURITY_GROUP_ID} \
   --listeners "Protocol=HTTP,LoadBalancerPort=80,InstanceProtocol=HTTP,InstancePort=5601" \
+  --tags "${TAGS},Key=Name,Value=${NAME}-data" \
   --subnets ${SUBNET_ID})`
 
 IDS=`echo $(aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" "Name=tag:Name,Values=${NAME}-master" --query "Reservations[].Instances[].InstanceId" --output text)`
