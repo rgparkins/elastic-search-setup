@@ -7,7 +7,6 @@ services:
     environment:
     - cluster.name=docker-cluster
     - bootstrap.memory_lock=true
-    - ES_JAVA_OPTS=-Xms8g -Xmx8g
     restart: always
     ulimits:
       nproc: 65536
@@ -27,7 +26,7 @@ services:
     networks:
       - esnet
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.4.1
+    image: docker.elastic.co/kibana/kibana:6.6.1
     environment:
       SERVER_NAME: kibana.quoting.com
       ELASTICSEARCH_URL: http://elasticsearch:9200

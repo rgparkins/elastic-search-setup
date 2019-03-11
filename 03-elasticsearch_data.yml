@@ -40,3 +40,8 @@ discovery:
 thread_pool:
   bulk:
     queue_size: 500
+
+xpack:
+  monitoring:
+    collection:
+      enabled: true

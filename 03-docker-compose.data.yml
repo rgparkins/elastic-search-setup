@@ -7,7 +7,6 @@ services:
     environment:
     - cluster.name=docker-cluster
     - bootstrap.memory_lock=true
-    - ES_JAVA_OPTS=-Xms8g -Xmx8g
     restart: always
     ulimits:
       nproc: 65536

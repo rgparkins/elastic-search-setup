@@ -1,4 +1,4 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+FROM docker.elastic.co/elasticsearch/elasticsearch:6.6.1
 ENV REGION my-region
 ADD elasticsearch.yml /usr/share/elasticsearch/config/
 USER root

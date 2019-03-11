@@ -11,7 +11,13 @@ aws s3 cp s3://my-bucket/elasticsearch/docker-compose.data.yml /etc/elasticsearc
 
 sed -i -e "s/nodename/${HOSTNAME}/g" /etc/elasticsearch/elasticsearch.yml
 
-mkfs.xfs /dev/xvdba
+FILE_INFO=`echo $(file -s /dev/xvdba)`
+
+if [[ $FILE_INFO == *": data"* ]]; then
+  echo "Formatting file system"
+  mkfs.xfs /dev/xvdba
+fi
+
 mkdir -p /vol/es
 mount /dev/xvdba /vol/es
 
